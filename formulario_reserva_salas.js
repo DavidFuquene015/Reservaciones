@@ -1,6 +1,6 @@
 const BLOCKED = ['gmail', 'hotmail', 'yahoo', 'outlook', 'live', 'icloud', 'aol', 'protonmail', 'zoho', 'yandex'];
 
-const WEBHOOK_URL = 'https://pruebasauto015.app.n8n.cloud/webhook-test/agendar-cita';
+const WEBHOOK_URL = 'https://pruebasauto015.app.n8n.cloud/webhook/agendar-cita';
 
 // Festivos Colombia (YYYY-MM-DD) para bloquear en el calendario
 const HOLIDAYS = [
