@@ -109,10 +109,29 @@
         </div>
 
         <div class="field" id="field-hora" style="display:none">
-          <label>Hora de inicio <span style="font-weight:400;color:var(--color-text-muted);font-size:12px;">(7:00 am –
-              5:00
-              pm)</span></label>
-          <div class="time-grid" id="time-slots"></div>
+          <label>Disponibilidad Visual de Salones</label>
+          <div id="availability-container" style="margin-bottom: 24px;">
+            <div id="timeline" class="timeline-bar">
+              <div class="timeline-spinner">Esperando selección de fecha...</div>
+            </div>
+            <div class="timeline-legend">
+              <div class="legend-item">
+                <div class="legend-color lc-free"></div> Libre
+              </div>
+              <div class="legend-item">
+                <div class="legend-color lc-busy"></div> Ocupado
+              </div>
+            </div>
+            <div id="timeline-message"
+              style="text-align: center; font-size: 13.5px; font-weight: 600; margin-top: 12px; transition: color 0.3s ease;">
+            </div>
+          </div>
+
+          <label>¿A qué hora empieza? <span style="font-weight:400;color:var(--color-text-muted);font-size:12px;">(7:00
+              am – 5:00 pm)</span></label>
+          <div class="time-grid" id="time-slots">
+            <!-- slots generados en js -->
+          </div>
           <div class="error" id="err-hora">Debe seleccionar una hora de inicio.</div>
         </div>
 

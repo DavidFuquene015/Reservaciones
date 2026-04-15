@@ -1,6 +1,7 @@
 const BLOCKED = ['gmail', 'hotmail', 'yahoo', 'outlook', 'live', 'icloud', 'aol', 'protonmail', 'zoho', 'yandex'];
 
 const WEBHOOK_URL = 'https://pruebasauto015.app.n8n.cloud/webhook/agendar-cita';
+const CHECK_URL = 'https://pruebasauto015.app.n8n.cloud/webhook/ver-disponibilidad';
 
 // Festivos Colombia (YYYY-MM-DD) para bloquear en el calendario
 const HOLIDAYS = [
@@ -17,6 +18,7 @@ const HOLIDAYS = [
 ];
 
 let selDate = null, selHour = null, selDur = null;
+let currentBusyHours = new Set();
 let calYear, calMonth;
 let gEmail = '', gNombre = '', gArea = '';
 
@@ -106,7 +108,120 @@ function selectDate(y, m, d) {
   renderSlots();
   document.getElementById('field-dur').style.display = 'none';
   document.getElementById('summary').style.display = 'none';
+
+  // Novedad: Obtener y mostrar disponibilidad
+  fetchAvailability(selDate);
 }
+
+const ALL_HOURS = ['7:00 am', '8:00 am', '9:00 am', '10:00 am', '11:00 am', '12:00 pm', '1:00 pm', '2:00 pm', '3:00 pm', '4:00 pm', '5:00 pm'];
+
+async function fetchAvailability(dt) {
+  if (!dt) return;
+
+  // Limpiar horas ocupadas inmediatamente para no heredar bloqueos del día anterior
+  currentBusyHours.clear();
+
+  const isoDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  const tl = document.getElementById('timeline');
+  const msgDiv = document.getElementById('timeline-message');
+  if (!tl) return;
+
+  tl.innerHTML = '<div class="timeline-spinner">Sincronizando con Google Sheets...</div>';
+  if (msgDiv) msgDiv.innerHTML = '';
+
+  try {
+    const res = await fetch(`${CHECK_URL}?fecha=${isoDate}&_t=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error();
+    let data = await res.json();
+
+    // N8N a veces devuelve array envuelto o un puro objeto
+    if (!Array.isArray(data) && data[0] === undefined) {
+      if (data.data) data = data.data;
+      else data = [data];
+    }
+
+    tl.innerHTML = '';
+    let busyHours = new Set();
+
+    data.forEach(r => {
+      let rHour = (r["Hora de Inicio"] || r["hora"] || "").toString().trim().toLowerCase();
+      if (!rHour) return;
+
+      // Remover el cero inicial si Excel/N8N lo manda como "07:00 am"
+      if (rHour.startsWith('0')) rHour = rHour.substring(1);
+
+      // Quitar posibles puntos en "a. m."
+      rHour = rHour.replace(/\./g, '').replace('a m', 'am').replace('p m', 'pm');
+
+      let startIdx = ALL_HOURS.indexOf(rHour);
+      if (startIdx !== -1) {
+        let dur = parseInt(r["Duración (H)"] || r["duracion"] || "1");
+        for (let i = 0; i < dur; i++) {
+          if (ALL_HOURS[startIdx + i]) {
+            busyHours.add(ALL_HOURS[startIdx + i]);
+            currentBusyHours.add(ALL_HOURS[startIdx + i]);
+          }
+        }
+      }
+    });
+
+    ALL_HOURS.forEach(hr => {
+      const slot = document.createElement('div');
+      slot.className = 'timeline-slot' + (busyHours.has(hr) ? ' busy' : '');
+      slot.setAttribute('data-time', hr);
+      tl.appendChild(slot);
+    });
+
+    // Bloquear botones físicos de hora en el grid
+    const cards = document.querySelectorAll('.time-card');
+    cards.forEach(card => {
+      const lbl = card.querySelector('.time-label').innerText.trim();
+      if (busyHours.has(lbl)) {
+        card.classList.add('disabled-slot');
+      } else {
+        card.classList.remove('disabled-slot');
+      }
+    });
+
+    if (msgDiv) {
+      if (busyHours.size === 0) {
+        msgDiv.innerHTML = '✨ ¡Esta fecha está libre en su totalidad! Sé el primero en reservar.';
+        msgDiv.style.color = 'var(--color-success)';
+      } else {
+        msgDiv.innerHTML = `📝 Hay ${busyHours.size} hora(s) ya ocupada(s). Elige una franja libre abajo.`;
+        msgDiv.style.color = 'var(--color-text-main)';
+      }
+    }
+
+  } catch (err) {
+    console.error("Timeline catch", err);
+    tl.innerHTML = '';
+    ALL_HOURS.forEach(hr => {
+      const slot = document.createElement('div');
+      slot.className = 'timeline-slot';
+      slot.setAttribute('data-time', hr);
+      tl.appendChild(slot);
+    });
+
+    const cards = document.querySelectorAll('.time-card');
+    cards.forEach(card => {
+      card.classList.remove('disabled-slot');
+    });
+
+    if (msgDiv) {
+      msgDiv.innerHTML = '✨ ¡Esta fecha parece estar libre en su totalidad! Selecciona tu hora.';
+      msgDiv.style.color = 'var(--color-success)';
+    }
+  }
+}
+
 function renderSlots() {
   const el = document.getElementById('time-slots');
   el.innerHTML = '';
@@ -121,7 +236,18 @@ function renderSlots() {
 }
 function selectHour(h) {
   selHour = h; selDur = null;
-  renderSlots();
+
+  // En vez de destruir y recrear todas las tarjetas, 
+  // solo actualizamos las clases visuales de selección para no perder las rojas
+  document.querySelectorAll('.time-card').forEach(c => {
+    const lbl = c.querySelector('.time-label').innerText.trim();
+    if (lbl === fmt(h)) {
+      c.classList.add('selected-slot');
+    } else {
+      c.classList.remove('selected-slot');
+    }
+  });
+
   hideErr('hora');
   document.getElementById('field-dur').style.display = 'block';
   renderDur();
@@ -130,7 +256,21 @@ function selectHour(h) {
 function renderDur() {
   const el = document.getElementById('dur-btns');
   el.innerHTML = '';
-  const max = Math.min(4, 17 - selHour);
+  let max = Math.min(4, 17 - selHour);
+
+  // Evitar que la duración cruce una hora que ya está ocupada
+  for (let i = 1; i <= max; i++) {
+    let checkHourStr = fmt(selHour + i - 1);
+    if (currentBusyHours.has(checkHourStr)) {
+      max = i - 1;
+      break;
+    }
+  }
+
+  // Por si acaso max bajó a 0 en una hora ocupada que se forzó seleccionar, 
+  // no debería pasar porque el botón estaría deshabilitado:
+  if (max < 1) max = 1;
+
   for (let i = 1; i <= max; i++) {
     const b = document.createElement('button');
     b.className = 'dur-btn' + (selDur === i ? ' active' : '');
@@ -270,6 +410,7 @@ function showConfirmation(nombre, area) {
 
 function resetForm() {
   selDate = null; selHour = null; selDur = null;
+  currentBusyHours.clear();
   gEmail = ''; gNombre = ''; gArea = '';
   document.getElementById('step3').style.display = 'none';
   document.getElementById('step1').style.display = 'block';
