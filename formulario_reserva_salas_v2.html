@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserva de Salas Corporativas - Colvatel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="formulario_reserva_salas.css">
+</head>
+
+<body>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="logo-bar">
+        <!-- Reemplaza "logo.png" por el nombre del archivo de la imagen que adjuntaste al chat -->
+        <img src="logo.png" alt="Colvatel" class="main-logo"
+          onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'; this.style.opacity='0.2';">
+        <span class="logo-text">Reserva de espacios</span>
+      </div>
+
+      <!-- PASO 1 -->
+      <div id="step1">
+        <div class="step-badge"><span class="step-dot"></span>Paso 1 de 2</div>
+        <h2>Ingresa tu correo corporativo</h2>
+        <p class="subtitle">Solo empleados con correo activo pueden reservar salas. Ingresa tu dirección para
+          continuar.</p>
+        <div class="field">
+          <label for="email">Correo electrónico corporativo</label>
+          <input type="email" id="email" placeholder="nombre@colvatel.com" autocomplete="off">
+          <div class="error" id="err-email">Correo inválido o no corporativo. Verifique e intente nuevamente.</div>
+        </div>
+        <div id="valid-email-row" style="display:none" class="check-row">
+          <div class="check-icon"><svg viewBox="0 0 10 10">
+              <polyline points="1.5,5 4,7.5 8.5,2" />
+            </svg></div>
+          <span class="check-label">Identidad confirmada: <b id="email-display"></b></span>
+        </div>
+        <button class="btn" onclick="validateEmail()">
+          Verificar y continuar
+          <svg
+            style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
+            viewBox="0 0 24 24">
+            <path d="M5 12h14m-7-7 7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- PASO 2 -->
+      <div id="step2" style="display:none">
+        <div class="step-badge"><span class="step-dot"></span>Paso 2 de 2</div>
+        <h2>Solicitar reserva de sala</h2>
+        <p class="subtitle">Complete los detalles a continuación para agendar su espacio.</p>
+        <div class="field">
+          <label>Nombre completo</label>
+          <input type="text" id="nombre" placeholder="Ej: María García López">
+          <div class="error" id="err-nombre">Ingrese su nombre y apellido completo.</div>
+        </div>
+        <div class="field">
+          <label>Número de celular</label>
+          <input type="tel" id="celular" placeholder="Ej: 3001234567">
+          <div class="error" id="err-celular">Ingrese un número celular válido (solo números).</div>
+        </div>
+        <div class="field">
+          <label>Área / Departamento</label>
+          <select id="area">
+            <option value="">Seleccione su área</option>
+            <option>Gerencia General</option>
+            <option>Recursos Humanos</option>
+            <option>Tecnología</option>
+            <option>Finanzas</option>
+            <option>Comercial / Ventas</option>
+            <option>Marketing</option>
+            <option>Operaciones</option>
+            <option>Legal</option>
+            <option>Otra</option>
+          </select>
+          <div class="error" id="err-area">Debe seleccionar su área.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Fecha de reserva <span style="font-weight:400;color:var(--color-text-muted);font-size:12px;">(Lunes a
+              Viernes)</span></label>
+          <div class="calendar">
+            <div class="cal-header">
+              <button class="cal-nav" onclick="changeMonth(-1)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <span class="cal-month" id="cal-title"></span>
+              <button class="cal-nav" onclick="changeMonth(1)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+            <div class="cal-grid" id="cal-dows"></div>
+            <div class="cal-grid" id="cal-days"></div>
+          </div>
+          <div class="error" id="err-fecha">Por favor, seleccione una fecha disponible.</div>
+        </div>
+
+        <div class="field" id="field-hora" style="display:none">
+          <label>Hora de inicio <span style="font-weight:400;color:var(--color-text-muted);font-size:12px;">(7:00 am –
+              5:00
+              pm)</span></label>
+          <div class="time-grid" id="time-slots"></div>
+          <div class="error" id="err-hora">Debe seleccionar una hora de inicio.</div>
+        </div>
+
+        <div class="field" id="field-dur" style="display:none">
+          <label>Duración requerida</label>
+          <div class="duration-row" id="dur-btns"></div>
+          <div class="error" id="err-dur">Seleccione el tiempo de uso.</div>
+        </div>
+
+        <div id="summary" style="display:none">
+          <div class="summary-box">
+            <div class="summary-row"><span class="sk">Fecha seleccionada</span><span class="sv" id="sum-fecha"></span>
+            </div>
+            <div class="summary-row"><span class="sk">Horario</span><span class="sv" id="sum-horario"></span></div>
+            <div class="summary-row"><span class="sk">Duración</span><span class="sv" id="sum-dur"></span></div>
+          </div>
+        </div>
+
+        <button class="btn" style="margin-top:1.5rem" onclick="submitForm()">
+          Confirmar Reserva
+          <svg
+            style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
+            viewBox="0 0 24 24">
+            <path d="M5 12h14m-7-7 7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- ENVIANDO -->
+      <div class="sending-overlay" id="step-sending">
+        <div class="spinner"></div>
+        <h3 style="font-size:18px;font-weight:600;color:var(--color-text-main);margin-bottom:8px">Procesando solicitud
+        </h3>
+        <p style="font-size:14px;color:var(--color-text-muted)">Registrando reserva y generando correo de
+          confirmación...</p>
+      </div>
+
+      <!-- ÉXITO + PREVIEW DE CORREO -->
+      <div class="success-screen" id="step3">
+        <div style="text-align:center;padding:1rem 0 1.5rem;">
+          <div class="success-icon-wrap"><svg viewBox="0 0 26 26">
+              <polyline points="4,13 10,19 22,7" />
+            </svg></div>
+          <div
+            style="font-size:22px;font-weight:700;color:var(--color-text-main);margin-bottom:0.5rem;letter-spacing:-0.5px;">
+            ¡Reserva Confirmada!</div>
+          <p style="font-size:14px;color:var(--color-text-muted);line-height:1.5">Hemos enviado los detalles completos a
+            la dirección <b id="confirm-email-txt" style="color:var(--color-text-main);font-weight:600"></b></p>
+        </div>
+
+        <div class="email-preview">
+          <div class="ep-header">
+            <div class="ep-header-top">
+              <div class="ep-logo">
+                <img src="logo.png" alt="Colvatel Logo"
+                  onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'; this.style.opacity='0.2';">
+              </div>
+              <div>
+                <div class="ep-from">reservas@colvatel.com</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;font-weight:500;">Para: <span
+                    id="ep-to"></span></div>
+              </div>
+            </div>
+            <div class="ep-subject">Confirmación de Reserva de Sala</div>
+          </div>
+          <div class="ep-body">
+            <div class="ep-greeting" id="ep-greeting"></div>
+            <div class="ep-folio" id="ep-folio"></div>
+            <div class="ep-detail-box">
+              <div class="ep-detail-row">
+                <div class="ep-icon"><svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg></div>
+                <span class="ep-detail-label">Fecha</span>
+                <span class="ep-detail-val" id="ep-fecha"></span>
+              </div>
+              <div class="ep-detail-row">
+                <div class="ep-icon"><svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg></div>
+                <span class="ep-detail-label">Horario</span>
+                <span class="ep-detail-val" id="ep-horario"></span>
+              </div>
+              <div class="ep-detail-row">
+                <div class="ep-icon"><svg viewBox="0 0 24 24">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg></div>
+                <span class="ep-detail-label">Duración</span>
+                <span class="ep-detail-val" id="ep-dur"></span>
+              </div>
+              <div class="ep-detail-row">
+                <div class="ep-icon"><svg viewBox="0 0 24 24">
+                    <path
+                      d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                    <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                    <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg></div>
+                <span class="ep-detail-label">Área</span>
+                <span class="ep-detail-val" id="ep-area"></span>
+              </div>
+            </div>
+            <p class="ep-note">Si necesitas modificar o cancelar esta reserva, comunícate con la administración al menos
+              2 horas antes de tu franja horaria. Este es un correo automático.</p>
+          </div>
+          <div class="ep-footer">Sistema Integrado de Accesos • Colvatel <span id="ep-year"></span></div>
+        </div>
+
+        <button class="btn btn-outline" style="margin-top:1.5rem; justify-content:center;" onclick="resetForm()">
+          Nueva reserva
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="formulario_reserva_salas.js"></script>
+</body>
+
+</html>
