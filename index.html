@@ -257,6 +257,116 @@
   </div>
 
   <script src="formulario_reserva_salas.js"></script>
+
+  <!-- INSTALACIÓN Y ESTILOS DE COLVIBOT (N8N CHAT WIDGET) -->
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+  <style>
+    /* Inyección de estilos corporativos al Chatbot de N8N */
+    :root {
+      --chat--color-primary: #002d62;
+      --chat--color-secondary: #0088ce;
+      --chat--color-primary-shade-50: #004080;
+      --chat--color-primary-shade-100: #001f44;
+      --chat--color-light: #ffffff;
+      --chat--color-dark: #1a202c;
+      --chat--window--border-radius: 16px;
+      --chat--message--border-radius: 12px;
+      --chat--header--background: linear-gradient(135deg, #002d62 0%, #0088ce 100%);
+      --chat--header--color: #ffffff;
+      --chat--toggle--background: linear-gradient(135deg, #002d62 0%, #0088ce 100%);
+      --chat--toggle--icon-color: #ffffff;
+    }
+
+    .chat-window {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      box-shadow: 0 15px 35px rgba(0, 45, 98, 0.15) !important;
+      border: 1px solid rgba(0, 45, 98, 0.1) !important;
+    }
+
+    /* Forzar estilo del botón flotante */
+    .chat-toggle-button,
+    button[class*="chat-toggle-button"],
+    .n8n-chat-wrap button {
+      background: linear-gradient(135deg, #002d62 0%, #0088ce 100%) !important;
+      border: none !important;
+      box-shadow: 0 10px 25px rgba(0, 45, 98, 0.3) !important;
+    }
+  </style>
+
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+      webhookUrl: 'https://pruebasauto015.app.n8n.cloud/webhook/6f22aea6-d35a-425b-a291-ac010fdcb2e4/chat',
+      webhookConfig: {
+        method: 'POST',
+        headers: {}
+      },
+      mode: 'window',
+      chatInputKey: 'chatInput',
+      chatSessionKey: 'sessionId',
+      metadata: {},
+      showWelcomeScreen: true,
+      defaultLanguage: 'es',
+      initialMessages: [
+        '¡Hola! Soy Colvi 👋, el asesor virtual de Colvatel. ¿En qué te puedo ayudar hoy?'
+      ],
+      i18n: {
+        es: {
+          title: 'Colvibot',
+          subtitle: '',
+          footer: '',
+          getStarted: 'Empezar a conversar',
+          inputPlaceholder: 'Escribe aquí tu pregunta...',
+        },
+        en: {
+          title: 'Colvibot',
+          subtitle: '',
+          footer: '',
+          getStarted: 'Empezar a conversar',
+          inputPlaceholder: 'Escribe aquí tu pregunta...',
+        }
+      }
+    });
+
+    // Inyectar el logo de Colvibot en el header del chat apenas aparezca en el DOM
+    const observer = new MutationObserver((mutations) => {
+      // Intentamos localizar elementos con clase relacionada a header en el chat
+      const chatHeaders = document.querySelectorAll('.chat-header, [class*="chat-header"], [class*="Header"]');
+
+      chatHeaders.forEach(header => {
+        // Verificar si contiene el título y que no hayamos inyectado el logo aún
+        if (header.innerText && header.innerText.includes('Colvibot') && !header.querySelector('.colvibot-avatar')) {
+          const img = document.createElement('img');
+          img.src = 'colvibot.png';
+          img.className = 'colvibot-avatar';
+
+          // Estilos para imagen tipo redondeada en la parte superior del chat
+          img.style.width = '56px';
+          img.style.height = '56px';
+          img.style.minWidth = '56px';
+          img.style.minHeight = '56px';
+          img.style.borderRadius = '50%';
+          img.style.objectFit = 'cover';
+          img.style.marginRight = '14px';
+          img.style.border = '2px solid rgba(255, 255, 255, 0.9)';
+          img.style.boxShadow = '0 3px 10px rgba(0,0,0,0.18)';
+          img.style.flexShrink = '0';
+          img.style.backgroundColor = 'white';
+
+          // Asegurarnos que el header se alinee usando flexbox
+          header.style.display = 'flex';
+          header.style.alignItems = 'center';
+          header.style.flexDirection = 'row';
+
+          // Insertar la imagen al principio, a la izquierda del título
+          header.prepend(img);
+        }
+      });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  </script>
 </body>
 
 </html>
